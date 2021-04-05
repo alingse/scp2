@@ -4,9 +4,11 @@ scp (real) over ssh
 
 适用于真的禁止了 scp 协议, 只开放 ssh 协议的场景
 
-## Usage
+## Why
 
-now only send file was enable
+if only ssh is enable and scp/sftp disabled
+
+## Usage
 
 ```bash
 scp2 -f ./scp2/core.py -u user@IP:~/core.py
@@ -16,9 +18,11 @@ scp2 -f ./scp2/core.py -u user@IP:~/core.py
 
 如果真的只让有 ssh, 那么就用输入命令的方式来传输信息
 
-1. `file` --> `base64` --> `chunk` --> `ssh.execute(echo "[chunk body]" >> /tmp)`
+write the file into command
 
-2. `ssh.execute(cat /tmp |base64 -d > dest)`
+1. `file` --> `base64` --> `chunk` --> `ssh.execute(echo "[chunk body]" >> /tmpfile)`
+
+2. `ssh.execute(cat /tmpfile |tr -d '\n'|base64 -d > dest)`
 
 
 It's real scp over the ssh.
