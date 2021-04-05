@@ -4,20 +4,33 @@ scp (real) over ssh
 
 适用于真的禁止了 scp 协议, 只开放 ssh 协议的场景
 
+## Usage
 
-## 原理
-
-如果真的只让有 ssh, 那么就用输入命令的方式来传输信息
-
-
-例子
+now only send file was enable
 
 ```bash
 scp2 -f ./scp2/core.py -u user@IP:~/core.py
-
 ```
 
-输出
+## How
+
+如果真的只让有 ssh, 那么就用输入命令的方式来传输信息
+
+1. `file` --> `base64` --> `chunk` --> `ssh.execute(echo "[chunk body]" >> /tmp)`
+
+2. `ssh.execute(cat /tmp |base64 -d > dest)`
+
+
+It's real scp over the ssh.
+
+
+### Example
+
+```bash
+scp2 -f ./scp2/core.py -u user@IP:~/core.py
+```
+
+the logs:
 
 ```
 INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_7.6p1)
@@ -34,6 +47,6 @@ INFO:root:upload success
 
 ## TODO
 
-1. real scp ( lib.gnu.coreutils.click.headers )
+1. real scp, dirs, empty resurive ( lib.gnu.coreutils.click.headers )
 2. better log
 3. base64 or ?
