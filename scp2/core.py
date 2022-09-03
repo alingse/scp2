@@ -2,17 +2,19 @@ import base64
 import io
 import logging
 import uuid
+import time
 
 import click
 import more_itertools
 import paramiko
 
 
-def new_ssh_conn(host, port, user):
+def new_ssh_chan(host, port, user):
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(host, port, user)
-    return ssh
+    chan = ssh.invoke_shell()
+    return chan
 
 
 def file_to_64(file):
@@ -23,24 +25,35 @@ def file_to_64(file):
     return content
 
 
-def chunk_upload_tmp(ssh_conn, tmpfile, content, chunksize=1024):
+def chunk_upload_tmp(chan, tmpfile, content, chunksize=1024):
     chunked = more_itertools.ichunked(content, chunksize)
     for c in chunked:
         chunk = ''.join(c)
-        cmd = f'echo "{chunk}" >> {tmpfile}'
+        cmd = f'echo "{chunk}" >> {tmpfile}\n'
         logging.info(cmd)
+        chan.send(cmd)
 
-        ssh_conn.exec_command(cmd)
 
-
-def rebuild_from_tmp(ssh_conn, tmpfile, tofile):
-    cmd = f"cat {tmpfile}|tr -d '\n'|base64 -d > {tofile}"
+def rebuild_from_tmp(chan, tmpfile, tofile):
+    cmd = f"cat {tmpfile}|tr -d '\n'|base64 -d > {tofile}\n"
     logging.info(cmd)
-    ssh_conn.exec_command(cmd)
+    chan.send(cmd)
 
-    cmd = f"rm {tmpfile}"
+    cmd = f"rm {tmpfile}\n"
     logging.info(cmd)
-    ssh_conn.exec_command(cmd)
+    chan.send(cmd)
+
+
+def log_chan_out(chan):
+    log = b''
+    while chan.recv_ready():
+        log += chan.recv(1)
+    print(log.decode())
+
+    log = b''
+    while chan.recv_stderr_ready():
+        log += chan.recv_stderr(1)
+    print(log.decode())
 
 
 # TODO: 兼容 scp 命令解析
@@ -52,18 +65,30 @@ def rebuild_from_tmp(ssh_conn, tmpfile, tofile):
 def scp2(file, uri, port):
     head, tofile = uri.split(':')
     user, host = head.split('@')
-
     content = file_to_64(file)
-
     logging.basicConfig(level=logging.INFO)
+    chan = new_ssh_chan(host=host, port=port, user=user)
+    time.sleep(1)
 
-    ssh_conn = new_ssh_conn(host=host, port=port, user=user)
+    logging.info(f'hello')
+    chan.send('\n\n\n\nls\n')
+    log_chan_out(chan)
+    chan.send('\n\n')
+    logging.info(f'world')
+    time.sleep(1)
 
-    tmpfile = f'/tmp/{uuid.uuid4()}'
+    tmpfile = tofile + '.tmp'
     logging.info(f'will temp write to {tmpfile}')
 
-    chunk_upload_tmp(ssh_conn, tmpfile, content)
-    rebuild_from_tmp(ssh_conn, tmpfile, tofile)
+    log_chan_out(chan)
+    chunk_upload_tmp(chan, tmpfile, content)
+    chan.send('\n\n')
+    time.sleep(1)
+    log_chan_out(chan)
+    rebuild_from_tmp(chan, tmpfile, tofile)
+    chan.send('\n\n')
+    time.sleep(1)
+    log_chan_out(chan)
 
     logging.info('upload success')
 

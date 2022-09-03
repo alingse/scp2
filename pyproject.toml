@@ -1,22 +1,3 @@
-[tool.poetry]
-name = "scp2"
-version = "0.0.1"
-description = "scp real over ssh"
-authors = ["alingse <alingse@foxmail.com>"]
-license = "MIT"
-
-[tool.poetry.dependencies]
-python = "^3.8"
-more-itertools = "^8.7.0"
-paramiko = "^2.7.2"
-click = "^7.1.2"
-
-[tool.poetry.dev-dependencies]
-
-[tool.poetry.scripts]
-scp2 = 'scp2.core:scp2'
-
-
 [tool.pdm]
 [tool.pdm.dev-dependencies]
 dev = []
@@ -29,11 +10,10 @@ build-backend = "pdm.pep517.api"
 
 [project]
 name = "scp2"
-version = "0.0.1"
+version = "0.0.2"
 description = "scp real over ssh"
 authors = [
     {name = "alingse", email = "alingse@foxmail.com"},
-    {name = "alingse",email = "alingse@foxmail.com"},
 ]
 dependencies = ["more-itertools<9.0.0,>=8.7.0", "paramiko<3.0.0,>=2.7.2", "click<8.0.0,>=7.1.2"]
 readme = "README.md"
@@ -41,6 +21,7 @@ license = {text = "MIT"}
 requires-python = ">=3.8,<4.0"
 
 [project.urls]
+homepage = "https://github.com/alingse/scp2"
 
 [project.scripts]
 scp2 = "scp2.core:scp2"
